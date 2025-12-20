@@ -19,10 +19,79 @@ const tbody       = document.getElementById('channels-body');
 const altCanvas   = document.getElementById('alt-canvas');
 const cn0Canvas   = document.getElementById('cn0-canvas');
 const dopCanvas   = document.getElementById('dop-canvas');
+const posCanvas   = document.getElementById('pos-canvas');
+const velCanvas   = document.getElementById('vel-canvas');
+const decimationSelect = document.getElementById('decimation-select');
+
+let decimationFactor = 1;
+let decimCounter = 0;
+
 
 const maxPointsSlider       = document.getElementById('max-points-slider');
 const maxPointsLabelInline1 = document.getElementById('max-points-label-inline');
 const maxPointsLabelInline2 = document.getElementById('max-points-label-inline-2');
+
+// --- Page navigation (Summary / Historics / Observables) ---
+const tabs = Array.from(document.querySelectorAll('.tab[data-page]'));
+const pages = new Map(Array.from(document.querySelectorAll('.page')).map(p => [p.id, p]));
+
+function showPage(pageId) {
+  for (const [id, el] of pages.entries()) {
+    el.classList.toggle('is-active', id === pageId);
+  }
+  for (const t of tabs) {
+    const active = (t.getAttribute('data-page') === pageId);
+    t.setAttribute('aria-selected', active ? 'true' : 'false');
+  }
+
+  // Leaflet needs a resize invalidate when shown
+  if (pageId === 'page-summary' && map) {
+    setTimeout(() => map.invalidateSize(), 0);
+  }
+
+  // Chart.js benefits from resize on show
+  if (pageId === 'page-historics') {
+    try { if (altChart) altChart.resize(); } catch (e) {}
+    try { if (cn0Chart) cn0Chart.resize(); } catch (e) {}
+    try { if (dopChart) dopChart.resize(); } catch (e) {}
+    needsAltUpdate = needsCn0Update = needsDopUpdate = true;
+    
+scheduleChartRender();
+if (posChart) {
+  posChart.data.datasets.forEach(ds => ds.data = ds.data.slice(-RENDER_POINTS));
+}
+if (velChart) {
+  velChart.data.datasets.forEach(ds => ds.data = ds.data.slice(-RENDER_POINTS));
+}
+
+  }
+}
+
+function pageFromHash() {
+  const h = (location.hash || '').replace('#', '').toLowerCase();
+  if (h === 'historics' || h === 'history') return 'page-historics';
+  if (h === 'observables' || h === 'channels') return 'page-observables';
+  return 'page-summary';
+}
+
+function initNav() {
+  const initial = pageFromHash();
+  showPage(initial);
+
+  for (const t of tabs) {
+    t.addEventListener('click', () => {
+      const pid = t.getAttribute('data-page');
+      if (pid === 'page-summary') location.hash = '#summary';
+      else if (pid === 'page-historics') location.hash = '#historics';
+      else if (pid === 'page-observables') location.hash = '#observables';
+      showPage(pid);
+    });
+  }
+
+  window.addEventListener('hashchange', () => {
+    showPage(pageFromHash());
+  });
+}
 
 // GNSS-SDR buttons
 const btnGnssStart  = document.getElementById('btn-gnss-start');
@@ -32,7 +101,8 @@ const btnGnssStop   = document.getElementById('btn-gnss-stop');
 const gnssStatus    = document.getElementById('gnss-status');
 
 // Initial max points, user-adjustable via slider
-let maxPoints = (typeof window.INIT_MAX_POINTS === 'number' ? window.INIT_MAX_POINTS : 300);
+let maxPoints = 3000;
+const RENDER_POINTS = 600;
 if (maxPointsSlider) maxPointsSlider.value = maxPoints;
 if (maxPointsLabelInline1) maxPointsLabelInline1.textContent = String(maxPoints);
 if (maxPointsLabelInline2) maxPointsLabelInline2.textContent = String(maxPoints);
@@ -59,16 +129,21 @@ const CHART_COLORS = [
 ];
 
 const plotData = {
+  pos: { datasets: new Map() },
+  vel: { datasets: new Map() },
+
   alt: { labels: [], data: [] },
   cn0: { datasets: new Map() },
   dop: { datasets: new Map() }
 };
 
-let altChart, cn0Chart, dopChart;
+let altChart, cn0Chart, dopChart, posChart, velChart;
 let needsAltUpdate = false;
 let needsCn0Update = false;
 let needsDopUpdate = false;
 let renderScheduled = false;
+let lastRenderMs = 0;
+const RENDER_INTERVAL_MS = 500;
 
 // ---- GNSS-SDR control helpers ----
 function setGnssUi(running, msg) {
@@ -138,10 +213,37 @@ if (btnGnssStop) {
 function scheduleChartRender() {
   if (renderScheduled) return;
   renderScheduled = true;
-  requestAnimationFrame(() => {
-    if (altChart && needsAltUpdate) altChart.update('none');
-    if (cn0Chart && needsCn0Update) cn0Chart.update('none');
-    if (dopChart && needsDopUpdate) dopChart.update('none');
+  
+const nowMs = performance.now();
+if (nowMs - lastRenderMs < RENDER_INTERVAL_MS) {
+  renderScheduled = false;
+  return;
+}
+lastRenderMs = nowMs;
+requestAnimationFrame(() => {
+    
+if (altChart && needsAltUpdate) {
+  altChart.data.labels = plotData.alt.labels.slice(-RENDER_POINTS);
+  altChart.data.datasets[0].data = plotData.alt.data.slice(-RENDER_POINTS);
+  altChart.update('none');
+}
+
+    
+if (cn0Chart && needsCn0Update) {
+  cn0Chart.data.datasets.forEach(ds => {
+    ds.data = ds.data.slice(-RENDER_POINTS);
+  });
+  cn0Chart.update('none');
+}
+
+    
+if (dopChart && needsDopUpdate) {
+  dopChart.data.datasets.forEach(ds => {
+    ds.data = ds.data.slice(-RENDER_POINTS);
+  });
+  dopChart.update('none');
+}
+
     needsAltUpdate = needsCn0Update = needsDopUpdate = false;
     renderScheduled = false;
   });
@@ -160,7 +262,15 @@ function trimChartDataToMaxPoints() {
   }
 
   needsAltUpdate = needsCn0Update = needsDopUpdate = true;
-  scheduleChartRender();
+  
+scheduleChartRender();
+if (posChart) {
+  posChart.data.datasets.forEach(ds => ds.data = ds.data.slice(-RENDER_POINTS));
+}
+if (velChart) {
+  velChart.data.datasets.forEach(ds => ds.data = ds.data.slice(-RENDER_POINTS));
+}
+
 }
 
 if (maxPointsSlider) {
@@ -196,9 +306,10 @@ function getChartConfig(title, yLabel, yMin, yMax, isSingleSeries) {
       maintainAspectRatio: false,
       scales: {
         x: {
-          type: 'linear',
-          title: { display: true, text: 'Time since start [s]' },
-          ticks: { callback: (val) => Number(val).toFixed(1) }
+          type: 'time',
+          time: { tooltipFormat: 'yyyy-MM-dd HH:mm:ss', displayFormats: { second: 'HH:mm:ss' } },
+          adapters: { date: { zone: 'utc' } },
+          title: { display: true, text: 'UTC Time' }
         },
         y: {
           title: { display: true, text: yLabel },
@@ -217,7 +328,11 @@ function getChartConfig(title, yLabel, yMin, yMax, isSingleSeries) {
 function initCharts() {
   altChart = new Chart(altCanvas, getChartConfig('Altitude', 'Height (m)', null, null, true));
   cn0Chart = new Chart(cn0Canvas, getChartConfig('C/N₀ per PRN', 'C/N₀ (dB-Hz)', 20, 55, false));
-  dopChart = new Chart(dopCanvas, getChartConfig('Doppler per PRN', 'Doppler (Hz)', null, null, false));
+  
+dopChart = new Chart(dopCanvas, getChartConfig('Doppler per PRN', 'Doppler (Hz)', null, null, false));
+posChart = new Chart(posCanvas, getChartConfig('Position ENU', 'Position (m)', null, null, false));
+velChart = new Chart(velCanvas, getChartConfig('Velocity ENU', 'Velocity (m/s)', null, null, false));
+
 
   cn0Chart.data.datasets = Array.from(plotData.cn0.datasets.values());
   dopChart.data.datasets = Array.from(plotData.dop.datasets.values());
@@ -272,7 +387,7 @@ function gpsToUtcDate(week, tow_ms) {
 // -------- PVT handling ----------
 function updatePvt(msg) {
   const now = Date.now();
-  const t   = (now - t0) / 1000.0;
+  const t   = (msg.timestamp ? new Date(msg.timestamp).getTime() : now);
 
   lastPvtTime = new Date(msg.timestamp || now);
 
@@ -356,7 +471,15 @@ function updatePvt(msg) {
       altData.data.shift();
     }
     needsAltUpdate = true;
-    scheduleChartRender();
+    
+scheduleChartRender();
+if (posChart) {
+  posChart.data.datasets.forEach(ds => ds.data = ds.data.slice(-RENDER_POINTS));
+}
+if (velChart) {
+  velChart.data.datasets.forEach(ds => ds.data = ds.data.slice(-RENDER_POINTS));
+}
+
   }
 }
 
@@ -364,7 +487,7 @@ function updatePvt(msg) {
 function updateChannel(sample) {
   const id   = sample.channel_id;
   const now  = Date.now();
-  const t    = (now - t0) / 1000.0;
+  const t    = (sample.timestamp ? new Date(sample.timestamp).getTime() : now);
   const prnKey = (sample.system || 'UNK') + String(sample.prn != null ? sample.prn : id);
 
   let tr = channelRows.get(id);
@@ -417,7 +540,7 @@ function updateMultiSeriesPlot(plotObj, chart, key, t, y, labelPrefix, chId) {
       data: [],
       borderColor: CHART_COLORS[colorIndex],
       borderWidth: 1.5,
-      pointRadius: 1.5,
+      pointRadius: 0,
       fill: false,
       tension: 0.1,
       parsing: false
@@ -436,7 +559,15 @@ function updateMultiSeriesPlot(plotObj, chart, key, t, y, labelPrefix, chId) {
   } else if (chart === dopChart) {
     needsDopUpdate = true;
   }
-  scheduleChartRender();
+  
+scheduleChartRender();
+if (posChart) {
+  posChart.data.datasets.forEach(ds => ds.data = ds.data.slice(-RENDER_POINTS));
+}
+if (velChart) {
+  velChart.data.datasets.forEach(ds => ds.data = ds.data.slice(-RENDER_POINTS));
+}
+
 }
 
 function handleMessage(msg) {
@@ -498,5 +629,12 @@ setInterval(function() {
 // Init on load
 initCharts();
 initMap();
+initNav();
 connectWS();
 fetchGnssStatus();
+
+if (decimationSelect) {
+  decimationSelect.addEventListener('change', () => {
+    decimationFactor = parseInt(decimationSelect.value, 10) || 1;
+  });
+}
