@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>GNSS-SDR Live Monitor</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+  <!-- Leaflet (OpenStreetMap) -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""
+  />
+  <script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""
+  ></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles.css" />
+
+  <script>
+    // Valor inicial de historial para los gráficos
+    window.INIT_MAX_POINTS = 300;
+  </script>
+</head>
+<body>
+  <h1>🛰️ GNSS-SDR Live Monitor</h1>
+  <div id="subtitle">
+    <span id="ws-status" class="ws-bad">WebSocket: connecting…</span>
+  </div>
+
+  <div class="grid">
+    <section>
+      <!-- GNSS-SDR CONTROL -->
+      <section class="card" id="gnss-control-card">
+        <h2>GNSS-SDR Control</h2>
+        <small>Start/stop local gnss-sdr process</small>
+        <div class="gnss-control-row">
+          <button id="btn-gnss-start">Replay Rocket launch</button>
+          <button id="btn-gnss-start-2">Start GNSS-SDR (RTL Real-Time)</button>
+          <button id="btn-gnss-start-3">Replay LEO Cubesat</button>
+          <button id="btn-gnss-stop" class="stop">Stop</button>
+          <span id="gnss-status">Status: unknown</span>
+        </div>
+      </section>
+
+      <!-- PVT CARD -->
+      <section class="card">
+        <h2>Position, Velocity, Time (PVT)</h2>
+        <small id="pvt-age">No data yet</small>
+
+        <div class="pvt-label">Geographic Coordinates</div>
+        <div class="pvt-row">
+          <div class="pvt-value" id="pvt-lat">Lat: –</div>
+          <div class="pvt-value" id="pvt-lon">Lon: –</div>
+          <div class="pvt-value" id="pvt-height">Alt: –</div>
+        </div>
+
+        <div class="pvt-label">Velocity ENU (m/s)</div>
+        <div class="pvt-row">
+          <div class="pvt-value" id="pvt-vel-e">E: –</div>
+          <div class="pvt-value" id="pvt-vel-n">N: –</div>
+          <div class="pvt-value" id="pvt-vel-u">U: –</div>
+        </div>
+
+        <div class="pvt-label">DOPs & Satellites</div>
+        <div class="pvt-dops-row">
+          <div class="pvt-value" id="pvt-dops">GDOP – PDOP – HDOP – VDOP –</div>
+          <div class="pvt-value" id="pvt-sats">Sats: –</div>
+        </div>
+
+        <div class="pvt-label">Time</div>
+        <div class="pvt-dops-row">
+          <div class="pvt-value" id="pvt-weektow">Week –  TOW –</div>
+          <div class="pvt-value" id="pvt-time-rx">UTC Time: –</div>
+        </div>
+
+        <div class="status-pill">
+          <span class="status-dot" id="pvt-dot-bad"></span>
+          <span id="pvt-sol-status">No solution</span>
+        </div>
+      </section>
+
+      <!-- Map + plots in a single row -->
+      <div class="map-plots-row">
+        <!-- Map card -->
+        <section class="card" id="map-card">
+          <h2>Map (OpenStreetMap)</h2>
+          <small>Current receiver position</small>
+          <div id="map"></div>
+        </section>
+
+        <!-- Time Series Plots (wide card) -->
+        <section class="card" id="plots-card">
+          <h2>Time Series Plots</h2>
+          <small>Last <span id="max-points-label-inline">300</span> samples – Chart.js</small>
+
+          <div id="max-points-container">
+            <span>History length:</span>
+            <input
+              type="range"
+              id="max-points-slider"
+              min="50"
+              max="1000"
+              step="50"
+              value="300"
+            />
+            <span><span id="max-points-label-inline-2">300</span> samples</span>
+          </div>
+
+          <div class="plot-wrapper">
+            <div class="plot-title">Altitude [m]</div>
+            <canvas id="alt-canvas"></canvas>
+          </div>
+          <div class="plot-wrapper">
+            <div class="plot-title">C/N₀ [dB-Hz]</div>
+            <canvas id="cn0-canvas"></canvas>
+          </div>
+          <div class="plot-wrapper">
+            <div class="plot-title">Carrier Doppler [Hz]</div>
+            <canvas id="dop-canvas"></canvas>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section>
+      <section class="card">
+        <h2>Tracking Channels</h2>
+        <small>Status of all actively tracked channels</small>
+        <div id="channels-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:3rem;">CH</th>
+                <th style="width:3.5rem;">PRN</th>
+                <th style="width:3.5rem;">Sys</th>
+                <th style="width:3.5rem;">Sig</th>
+                <th style="width:4.5rem;" class="num">C/N₀</th>
+                <th style="width:6rem;" class="num">Doppler</th>
+                <th>Last update</th>
+              </tr>
+            </thead>
+            <tbody id="channels-body"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </div>
+
+  <div id="footer-log"></div>
+
+  <!-- Client logic -->
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="1200" height="700" viewBox="0 0 1200 700"
+     xmlns="http://www.w3.org/2000/svg"
+     font-family="Arial, Helvetica, sans-serif">
+
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="10" refY="5"
+            orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#333"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect x="0" y="0" width="1200" height="700" fill="#ffffff"/>
+
+  <!-- RTL-SDR -->
+  <rect x="40" y="280" width="200" height="80" rx="10" ry="10" fill="#e6f2ff" stroke="#333"/>
+  <text x="140" y="310" font-size="16" text-anchor="middle" font-weight="bold">RTL-SDR</text>
+  <text x="140" y="330" font-size="13" text-anchor="middle">RF Front-End</text>
+
+  <!-- GNSS-SDR -->
+  <rect x="320" y="240" width="260" height="160" rx="10" ry="10" fill="#e8ffe8" stroke="#333"/>
+  <text x="450" y="270" font-size="18" text-anchor="middle" font-weight="bold">GNSS-SDR</text>
+  <text x="450" y="300" font-size="13" text-anchor="middle">GPS L1 C/A</text>
+  <text x="450" y="320" font-size="13" text-anchor="middle">7 Channels · 4 ms</text>
+  <text x="450" y="340" font-size="13" text-anchor="middle">PVT + Observables</text>
+
+  <!-- Node.js -->
+  <rect x="660" y="220" width="300" height="200" rx="10" ry="10" fill="#fff3e6" stroke="#333"/>
+  <text x="810" y="250" font-size="18" text-anchor="middle" font-weight="bold">Node.js Web Server</text>
+  <text x="810" y="280" font-size="13" text-anchor="middle">UDP (PVT + Observables)</text>
+  <text x="810" y="300" font-size="13" text-anchor="middle">Protobuf Decode</text>
+  <text x="810" y="320" font-size="13" text-anchor="middle">WebSocket</text>
+  <text x="810" y="340" font-size="13" text-anchor="middle">GNSS-SDR Control API</text>
+
+  <!-- Browser -->
+  <rect x="1020" y="260" width="160" height="120" rx="10" ry="10" fill="#f2f2f2" stroke="#333"/>
+  <text x="1100" y="300" font-size="16" text-anchor="middle" font-weight="bold">Browser UI</text>
+  <text x="1100" y="320" font-size="13" text-anchor="middle">Dashboard</text>
+  <text x="1100" y="340" font-size="13" text-anchor="middle">Map · Plots</text>
+
+  <!-- Python -->
+  <rect x="660" y="460" width="300" height="100" rx="10" ry="10" fill="#f0e6ff" stroke="#333"/>
+  <text x="810" y="500" font-size="16" text-anchor="middle" font-weight="bold">Python Interface</text>
+  <text x="810" y="520" font-size="13" text-anchor="middle">Selected PVT / C/N₀</text>
+
+  <!-- MCU -->
+  <rect x="320" y="500" width="260" height="120" rx="10" ry="10" fill="#ffe6e6" stroke="#333"/>
+  <text x="450" y="540" font-size="16" text-anchor="middle" font-weight="bold">STM32F0 MCU</text>
+  <text x="450" y="560" font-size="13" text-anchor="middle">LED Matrix Driver</text>
+  <text x="450" y="580" font-size="13" text-anchor="middle">Real-time Visualization</text>
+
+  <!-- Arrows -->
+  <line x1="240" y1="320" x2="320" y2="320" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="580" y1="320" x2="660" y2="320" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="960" y1="320" x2="1020" y2="320" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="810" y1="420" x2="810" y2="460" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="660" y1="510" x2="580" y2="560" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Platform Label -->
+  <text x="450" y="210" font-size="14" text-anchor="middle" font-style="italic">
+    Arduino UNO Q (Debian Linux + MCU)
+  </text>
+
+</svg>

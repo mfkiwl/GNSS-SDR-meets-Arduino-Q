@@ -1,0 +1,266 @@
+:root {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+body {
+  margin: 0;
+  padding: 1.2rem 1.5rem 1.5rem;
+  background: #020617;
+  color: #e5e7eb;
+}
+h1 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.5rem;
+  border-bottom: 2px solid #1f2937;
+  padding-bottom: 0.5rem;
+}
+#subtitle {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin-bottom: 1rem;
+}
+.grid {
+  display: grid;
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: flex-start;
+}
+.card {
+  background: #0f172a;
+  border-radius: 0.75rem;
+  border: 1px solid #1f2937;
+  padding: 1rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+.card h2 {
+  margin: 0 0 0.6rem 0;
+  font-size: 1.05rem;
+  color: #93c5fd;
+}
+.card small {
+  opacity: 0.8;
+  font-size: 0.75rem;
+}
+
+.pvt-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+.pvt-label {
+  opacity: 0.75;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  grid-column: 1 / span 3;
+  border-top: 1px dashed #1e293b;
+  padding-top: 0.4rem;
+  margin-top: 0.4rem;
+}
+.pvt-label:first-child {
+  border-top: none;
+}
+.pvt-value {
+  font-family: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  font-weight: 500;
+  color: #e5e7eb;
+}
+.pvt-dops-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+.pvt-dops-row .pvt-value {
+  grid-column: 1 / span 2;
+}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: #1e293b;
+  border: 1px solid #334155;
+  margin-top: 0.6rem;
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+#pvt-dot-bad { background: #f97316; animation: none; }
+#pvt-dot-ok { background: #22c55e; }
+
+#pvt-age {
+  opacity: 0.7;
+  font-size: 0.7rem;
+  margin-bottom: 0.5rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  table-layout: fixed;
+}
+thead {
+  background: #0f172a;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+th, td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.75rem;
+  opacity: 0.85;
+  text-transform: uppercase;
+}
+.num {
+  text-align: right;
+  font-family: "JetBrains Mono", "SF Mono", Menlo, monospace;
+}
+#channels-container {
+  max-height: 400px;
+  overflow-y: auto;
+  border-radius: 0.6rem;
+  border: 1px solid #1f2937;
+  margin-top: 0.8rem;
+  background: #020617;
+}
+.cn0-good      { color: #22c55e; }
+.cn0-mid       { color: #eab308; }
+.cn0-bad       { color: #f97316; }
+.cn0-terrible  { color: #dc2626; text-decoration: underline wavy #dc2626; }
+
+#footer-log {
+  margin-top: 1.5rem;
+  font-size: 0.75rem;
+  opacity: 0.6;
+  font-family: "JetBrains Mono", "SF Mono", Menlo, monospace;
+  white-space: pre-wrap;
+  border-top: 1px solid #1f2937;
+  padding-top: 0.6rem;
+}
+#ws-status {
+  font-size: 0.78rem;
+  opacity: 0.9;
+}
+.ws-ok { color: #4ade80; }
+.ws-bad { color: #f97316; }
+
+/* GNSS-SDR control card */
+#gnss-control-card {
+  margin-bottom: 1rem;
+}
+.gnss-control-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+.gnss-control-row button {
+  border-radius: 999px;
+  border: 1px solid #1e40af;
+  background: #1d4ed8;
+  color: #e5e7eb;
+  padding: 0.25rem 0.8rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.gnss-control-row button[disabled] {
+  opacity: 0.5;
+  cursor: default;
+}
+.gnss-control-row button.stop {
+  border-color: #b91c1c;
+  background: #b91c1c;
+}
+#gnss-status {
+  font-size: 0.78rem;
+  opacity: 0.9;
+}
+
+/* Map + plots in one row */
+.map-plots-row {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.2fr) minmax(380px, 2fr);
+  gap: 1rem;
+  margin-top: 1.2rem;
+  align-items: stretch;
+}
+@media (max-width: 1100px) {
+  .map-plots-row {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 800px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+#map {
+  width: 100%;
+  height: 260px;
+  border-radius: 0.6rem;
+  overflow: hidden;
+  margin-top: 0.6rem;
+}
+
+/* Plots stacked in one wide card */
+#plots-card h2 {
+  margin-bottom: 0.25rem;
+}
+.plot-wrapper {
+  margin-top: 0.9rem;
+  border-top: 1px solid #1e293b;
+  padding-top: 0.7rem;
+}
+.plot-wrapper:first-child {
+  border-top: none;
+  margin-top: 0.4rem;
+  padding-top: 0;
+}
+.plot-title {
+  font-size: 0.9rem;
+  opacity: 0.95;
+  margin-bottom: 0.3rem;
+  color: #e0f2f1;
+}
+canvas {
+  width: 100%;
+  max-height: 190px;
+  display: block;
+}
+
+/* Slider */
+#max-points-container {
+  margin-top: 0.3rem;
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  opacity: 0.85;
+}
+#max-points-slider {
+  flex: 1 1 140px;
+}
