@@ -54,7 +54,14 @@ function showPage(pageId) {
     try { if (altChart) altChart.resize(); } catch (e) {}
     try { if (cn0Chart) cn0Chart.resize(); } catch (e) {}
     try { if (dopChart) dopChart.resize(); } catch (e) {}
-    needsAltUpdate = needsCn0Update = needsDopUpdate = true;
+    for (const ds of plotData.pos.datasets.values()) {
+      while (ds.data.length > maxPoints) ds.data.shift();
+    }
+    for (const ds of plotData.vel.datasets.values()) {
+      while (ds.data.length > maxPoints) ds.data.shift();
+    }
+
+    needsAltUpdate = needsCn0Update = needsDopUpdate = needsPosUpdate = needsVelUpdate = true;
     
 scheduleChartRender();
 if (posChart) {
@@ -141,6 +148,8 @@ let altChart, cn0Chart, dopChart, posChart, velChart;
 let needsAltUpdate = false;
 let needsCn0Update = false;
 let needsDopUpdate = false;
+let needsPosUpdate = false;
+let needsVelUpdate = false;
 let renderScheduled = false;
 let lastRenderMs = 0;
 const RENDER_INTERVAL_MS = 500;
@@ -244,7 +253,33 @@ if (dopChart && needsDopUpdate) {
   dopChart.update('none');
 }
 
-    needsAltUpdate = needsCn0Update = needsDopUpdate = false;
+    if (posChart && needsPosUpdate) {
+
+      posChart.data.datasets.forEach(ds => {
+
+        ds.data = ds.data.slice(-RENDER_POINTS);
+
+      });
+
+      posChart.update('none');
+
+    }
+
+
+    if (velChart && needsVelUpdate) {
+
+      velChart.data.datasets.forEach(ds => {
+
+        ds.data = ds.data.slice(-RENDER_POINTS);
+
+      });
+
+      velChart.update('none');
+
+    }
+
+
+    needsAltUpdate = needsCn0Update = needsDopUpdate = needsPosUpdate = needsVelUpdate = false;
     renderScheduled = false;
   });
 }
@@ -261,7 +296,26 @@ function trimChartDataToMaxPoints() {
     while (ds.data.length > maxPoints) ds.data.shift();
   }
 
-  needsAltUpdate = needsCn0Update = needsDopUpdate = true;
+  for (const ds of plotData.pos.datasets.values()) {
+
+
+    while (ds.data.length > maxPoints) ds.data.shift();
+
+
+  }
+
+
+  for (const ds of plotData.vel.datasets.values()) {
+
+
+    while (ds.data.length > maxPoints) ds.data.shift();
+
+
+  }
+
+
+
+  needsAltUpdate = needsCn0Update = needsDopUpdate = needsPosUpdate = needsVelUpdate = true;
   
 scheduleChartRender();
 if (posChart) {
@@ -285,7 +339,7 @@ if (maxPointsSlider) {
   });
 }
 
-function getChartConfig(title, yLabel, yMin, yMax, isSingleSeries) {
+function getChartConfig(title, yLabel, yMin, yMax, isSingleSeries, datasetsMap) {
   return {
     type: 'line',
     data: {
@@ -298,7 +352,7 @@ function getChartConfig(title, yLabel, yMin, yMax, isSingleSeries) {
         pointRadius: 0,
         fill: false,
         tension: 0.1
-      }] : Array.from(plotData.cn0.datasets.values()),
+      }] : Array.from((datasetsMap || plotData.cn0.datasets).values()),
     },
     options: {
       animation: false,
@@ -327,15 +381,17 @@ function getChartConfig(title, yLabel, yMin, yMax, isSingleSeries) {
 
 function initCharts() {
   altChart = new Chart(altCanvas, getChartConfig('Altitude', 'Height (m)', null, null, true));
-  cn0Chart = new Chart(cn0Canvas, getChartConfig('C/N₀ per PRN', 'C/N₀ (dB-Hz)', 20, 55, false));
+  cn0Chart = new Chart(cn0Canvas, getChartConfig('C/N₀ per PRN', 'C/N₀ (dB-Hz)', 20, 55, false, plotData.cn0.datasets));
   
-dopChart = new Chart(dopCanvas, getChartConfig('Doppler per PRN', 'Doppler (Hz)', null, null, false));
-posChart = new Chart(posCanvas, getChartConfig('Position ENU', 'Position (m)', null, null, false));
-velChart = new Chart(velCanvas, getChartConfig('Velocity ENU', 'Velocity (m/s)', null, null, false));
+dopChart = new Chart(dopCanvas, getChartConfig('Doppler per PRN', 'Doppler (Hz)', null, null, false, plotData.dop.datasets));
+posChart = new Chart(posCanvas, getChartConfig('Position LLA', 'Lat/Lon (deg), Alt (m)', null, null, false, plotData.pos.datasets));
+velChart = new Chart(velCanvas, getChartConfig('Velocity ENU', 'Velocity (m/s)', null, null, false, plotData.vel.datasets));
 
 
   cn0Chart.data.datasets = Array.from(plotData.cn0.datasets.values());
   dopChart.data.datasets = Array.from(plotData.dop.datasets.values());
+  posChart.data.datasets = Array.from(plotData.pos.datasets.values());
+  velChart.data.datasets = Array.from(plotData.vel.datasets.values());
 }
 
 function initMap() {
@@ -481,6 +537,13 @@ if (velChart) {
 }
 
   }
+  updateNamedSeriesPlot(plotData.pos, posChart, 'lat', t, msg.lat, 'Lat');
+  updateNamedSeriesPlot(plotData.pos, posChart, 'lon', t, msg.lon, 'Lon');
+  updateNamedSeriesPlot(plotData.pos, posChart, 'alt', t, msg.height, 'Alt');
+
+  updateNamedSeriesPlot(plotData.vel, velChart, 'vel_e', t, msg.vel_e, 'Vel E');
+  updateNamedSeriesPlot(plotData.vel, velChart, 'vel_n', t, msg.vel_n, 'Vel N');
+  updateNamedSeriesPlot(plotData.vel, velChart, 'vel_u', t, msg.vel_u, 'Vel U');
 }
 
 // -------- Channel handling ----------
@@ -536,7 +599,7 @@ function updateMultiSeriesPlot(plotObj, chart, key, t, y, labelPrefix, chId) {
   if (!dataset) {
     const colorIndex = plotObj.datasets.size % CHART_COLORS.length;
     dataset = {
-      label: labelPrefix + ' ' + key + ' (Ch ' + chId + ')',
+      label: labelPrefix + ' ' + key + (chId != null ? (' (Ch ' + chId + ')') : ''),
       data: [],
       borderColor: CHART_COLORS[colorIndex],
       borderWidth: 1.5,
@@ -568,6 +631,46 @@ if (velChart) {
   velChart.data.datasets.forEach(ds => ds.data = ds.data.slice(-RENDER_POINTS));
 }
 
+}
+
+function updateNamedSeriesPlot(plotObj, chart, key, t, y, label) {
+  if (typeof y !== "number" || isNaN(y)) return;
+
+  let dataset = plotObj.datasets.get(key);
+  if (!dataset) {
+    const colorIndex = plotObj.datasets.size % CHART_COLORS.length;
+    dataset = {
+      label: label,
+      data: [],
+      borderColor: CHART_COLORS[colorIndex],
+      borderWidth: 1.5,
+      pointRadius: 0,
+      fill: false,
+      tension: 0.1,
+      parsing: false
+    };
+    plotObj.datasets.set(key, dataset);
+    if (chart) {
+      chart.data.datasets = Array.from(plotObj.datasets.values());
+    }
+  }
+
+  dataset.data.push({ x: t, y: y });
+  if (dataset.data.length > maxPoints) dataset.data.shift();
+
+  if (chart === posChart) {
+    needsPosUpdate = true;
+  } else if (chart === velChart) {
+    needsVelUpdate = true;
+  }
+  
+  scheduleChartRender();
+  if (posChart) {
+    posChart.data.datasets.forEach(ds => ds.data = ds.data.slice(-RENDER_POINTS));
+  }
+  if (velChart) {
+    velChart.data.datasets.forEach(ds => ds.data = ds.data.slice(-RENDER_POINTS));
+  }
 }
 
 function handleMessage(msg) {
