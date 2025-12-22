@@ -745,12 +745,13 @@ function updateChannel(sample) {
   const tt = new Date(sample.timestamp || Date.now());
   tr.querySelector('.time').textContent = tt.toLocaleTimeString();
 
-  updateMultiSeriesPlot(plotData.cn0, cn0Chart, prnKey, t, sample.cn0_db_hz, 'C/N₀', id);
+  updateMultiSeriesPlot(plotData.cn0, cn0Chart, prnKey, t, sample.cn0_db_hz, 'C/N?'?', id, { minPositive: true });
   updateMultiSeriesPlot(plotData.dop, dopChart, prnKey, t, sample.doppler_hz, 'Doppler', id);
 }
 
-function updateMultiSeriesPlot(plotObj, chart, key, t, y, labelPrefix, chId) {
-  if (typeof y !== 'number' || isNaN(y) || y <= 0) return;
+function updateMultiSeriesPlot(plotObj, chart, key, t, y, labelPrefix, chId, opts) {
+  if (typeof y !== 'number' || isNaN(y)) return;
+  if (opts && opts.minPositive && y <= 0) return;
 
   let dataset = plotObj.datasets.get(key);
   if (!dataset) {
