@@ -83,12 +83,12 @@ The web interface allows the user to:
 
 - Start and stop the GNSS-SDR receiver  
 - Select between different GNSS-SDR configuration files  
-  - Offline / post-processing configuration (**TBC**)  
+  - Offline / post-processing configuration  
   - Real-time configuration using RTL-SDR  
 
 Selected GNSS-SDR outputs (observables, C/N₀, and PVT) are exposed for monitoring and downstream processing.
 
-**Figure 3 – Web interface for GNSS-SDR control (TBC)**
+**Figure 3 – Web interface for GNSS-SDR control**
 
 ![Web interface](images/web_interface.png)
 
@@ -139,8 +139,8 @@ A working video can be found in: https://youtu.be/a7ZrCYMQSxc
 - GPS L1 C/A only  
 - 7 tracking channels  
 - Real-time operation validated  
-- Galileo and multi-constellation support: **not yet enabled**  
-- Quantitative performance metrics (DOP, accuracy): **TBC**  
+- Galileo, OSNMA and multi-constellation support: **not yet enabled**  
+- Quantitative performance metrics (DOP, accuracy):  
 
 ---
 
